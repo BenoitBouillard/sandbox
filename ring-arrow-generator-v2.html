@@ -52,7 +52,7 @@
     <div id="controls">
         <label>
             Ratio intérieur :
-            <input type="number" id="ratio" value="0.6" step="0.05" min="0.05" max="0.95" >
+            <input type="number" id="ratio" value="0.6" step="0.05" min="0.00" max="0.95" >
           </label><br />
           <label>
             Séparation (°) :
@@ -60,7 +60,7 @@
           </label><br />
           <label>
             Flêche (°) :
-            <input type="number" id="arrow" value="6" step="0.5" min="0" max="25" >
+            <input type="number" id="arrow" value="6" step="0.5" min="-25" max="25" >
           </label><br />
           <label>
               Contour (px) :
@@ -99,9 +99,19 @@
     const svgContainer = document.getElementById("svg-container");
     const btnDownload = document.getElementById("download");
 
-    for (const el of document.querySelectorAll('input')) {
+    {
+      const conf = JSON.parse(localStorage.getItem("ring-arrow-generator")) || {};
+      for (const el of document.querySelectorAll('input')) {
+        if (conf[el.id] ) {
+          el.value = conf[el.id];
+        }
         el.onchange = generateSVG;
+      }
     }
+
+    
+
+
 
     const SIZE = 420;
     const CX = SIZE / 2;
@@ -308,6 +318,19 @@ function symmetricPoint(P, S1, S2) {
   };
 }
 
+// droite passant par un point, perpendiculaire à une autre droite
+function lineThroughPerpendicularTo(point, line) {
+  // direction de la droite de référence
+  const dir = sub(line.Q, line.P);
+
+  // vecteur perpendiculaire : rotation de 90° (x, y) → (-y, x)
+  const perp = { x: -dir.y, y: dir.x };
+
+  // on crée la nouvelle droite : point de départ = point donné, point suivant = point + vecteur perpendiculaire
+  return { P: point, Q: add(point, perp) };
+}
+
+
 function hsvToHex(h, s, v) {
   let f = (n, k = (n + h / 60) % 6) =>
     v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
@@ -478,11 +501,20 @@ function buildArrowV2({
   // p = Droite(EI, l) -> par EI // à l
   const p = lineThroughParallelTo(EI, l);
 
-  // EA = Intersection(m, p)
-  const EA = lineLineIntersection(m, p);
+  let EA;
+  let q;
+  //let q;
+  if (angleF == angleE) {
+    EA = midpoint(EO, EI);
+    q = lineThroughPerpendicularTo(EA, lineThrough(EO, EI))
 
+  } else {
+    // EA = Intersection(m, p)
+    EA = lineLineIntersection(m, p);
   // q = Bissectrice(EO, EA, EI)
-  const q = angleBisector(EO, EA, EI);
+  q = angleBisector(EO, EA, EI);
+  }
+
 
   // n' = Symétrie(n, q)
   const nPrime = reflectLineAcrossLine(n, q);
@@ -491,8 +523,14 @@ function buildArrowV2({
   const inter_d_nPrime = lineCircleIntersections(nPrime.P, nPrime.Q, O, rInner);
   const SI = nearestOf(inter_d_nPrime, E); // (… , 2)
 
-  // SA = Intersection(n, n')
-  const SA = lineLineIntersection(n, nPrime);
+  let SA;
+  if (angleF == angleE) {
+    SA = midpoint(SO, SI);
+
+  } else {
+    // SA = Intersection(n, n')
+    SA = lineLineIntersection(n, nPrime);
+  }
 
   return {
     EA,
@@ -514,30 +552,30 @@ function buildArrowV2({
      * L outerStart
      * Z
      */
-    function createArrowSlice(startAngle, endAngle, innerR, outerR, index, total, conf) {
+    function createArrowSlice(item, outerR, total, conf) {
 
          const startArrow = buildArrowV2( {
             O: pt(CX, CY),
-            angleE: startAngle,
-            angleEO: startAngle - conf.gap,
-            angleF: startAngle + conf.arrow,
+            angleE: item.start,
+            angleEO: item.start - conf.gap,
+            angleF: item.start + conf.arrow,
             rOuter: outerR,
-            rInner: innerR,
+            rInner: outerR * conf.ratio,
          })
 
          const endArrow = buildArrowV2( {
             O: pt(CX, CY),
-            angleE: endAngle,
-            angleEO: endAngle - conf.gap,
-            angleF: endAngle + conf.arrow,
+            angleE: item.end,
+            angleEO: item.end - conf.gap,
+            angleF: item.end + conf.arrow,
             rOuter: outerR,
-            rInner: innerR,
+            rInner: outerR * conf.ratio,
          })
 
 
       console.log(startArrow.SO, endArrow.EO, endArrow.EA, endArrow.EI, startArrow.SI, startArrow.SA)
 
-      const sweep = endAngle - startAngle;
+      const sweep = item.end - item.start;
       const largeArc = sweep > 180 ? 1 : 0;
 
 
@@ -546,13 +584,13 @@ function buildArrowV2({
         `A ${outerR} ${outerR} 0 ${largeArc} 1 ${endArrow.EO.x} ${endArrow.EO.y}`,
         `L ${endArrow.EA.x} ${endArrow.EA.y}`,
         `L ${endArrow.EI.x} ${endArrow.EI.y}`,
-        `A ${innerR} ${innerR} 0 ${largeArc} 0 ${startArrow.SI.x} ${startArrow.SI.y}`,
+        `A ${outerR * conf.ratio} ${outerR * conf.ratio} 0 ${largeArc} 0 ${startArrow.SI.x} ${startArrow.SI.y}`,
         `L ${startArrow.SA.x} ${startArrow.SA.y}`,
         `L ${startArrow.SO.x} ${startArrow.SO.y}`,
         "Z"
       ].join(" ");
 
-      const hue = Math.round((index / total) * 360);
+      const hue = Math.round((item.index / total) * 360);
       const fill = hsvToHex(hue, conf.saturationFill, conf.lightnessFill);
       const strokeColor = hsvToHex(hue, conf.saturationStroke, conf.lightnessStroke);
 
@@ -577,6 +615,7 @@ function buildArrowV2({
                 conf[el.id] = el.value;
             }
         }
+        localStorage.setItem("ring-arrow-generator", JSON.stringify(conf))
 
       svgContainer.innerHTML = "";
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -612,11 +651,8 @@ function buildArrowV2({
 
       for (const item of items) {
         const slice = createArrowSlice(
-            item.start,
-            item.end,
-          R_OUTER * conf.ratio,
+          item,
           R_OUTER,
-          item.index,
           items.length,
           conf
         );
