@@ -4,596 +4,420 @@
   <meta charset="UTF-8" />
   <title>Anneau en flèches imbriquées</title>
   <style>
-    body {
+    :root {
       font-family: sans-serif;
-      max-width: 950px;
-      margin: 20px auto;
     }
-    #controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
+
+    body {
+      max-width: 960px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+
+    h1 {
       margin-bottom: 1rem;
     }
-    label {
-      display: block;
-      gap: .4rem;
-      align-items: center;
-      font-size: .9rem;
+
+    form {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      margin-bottom: 1.5rem;
     }
-    svg {
+
+    fieldset {
       border: 1px solid #ccc;
-      background: #fff;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
     }
+
+    legend {
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0 0.4rem;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      margin: 0.35rem 0;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      flex: 1 1 auto;
+      padding: 0.3rem 0.4rem;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+
+    input[type="number"] {
+      max-width: 90px;
+    }
+
     button {
       cursor: pointer;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #0d6efd;
+      background: #0d6efd;
+      color: #fff;
+      font-size: 0.95rem;
+      justify-self: start;
     }
-    input[type="number"] {
-      width: 6ex;
+
+    svg {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      display: block;
+      margin: 0 auto;
     }
-  
   </style>
 </head>
 <body>
   <h1>Graphique SVG en flèches imbriquées</h1>
 
-  <div>
-    <div id="controls">
-        <label>
-            Nb d’items :
-            <input type="number" id="items" value="6" min="1" >
-        </label>    
-        <label>
-              ou par dimension (1,3,1):
-              <input type="text" id="itemsSizes" value="" >
-        </label>      
-    </div>
-    <div id="controls">
-        <label>
-            Ratio intérieur :
-            <input type="number" id="ratio" value="0.6" step="0.05" min="0.00" max="0.95" >
-          </label><br />
-          <label>
-            Séparation (°) :
-            <input type="number" id="gap" value="3" step="0.5" min="0" max="25" >
-          </label><br />
-          <label>
-            Flêche (°) :
-            <input type="number" id="arrow" value="6" step="0.5" min="-25" max="25" >
-          </label><br />
-          <label>
-              Contour (px) :
-              <input type="number" id="stroke" value="2.5" step="0.5" min="0" max="10" >
-            </label><br />
-      
-    </div>
-    <div id="controls">
-        <label>
-            Saturation remplissage :
-            <input type="number" id="saturationFill" value="0.7" step="0.1" min="0" max="1" >
-          </label><br />
-          <label>
-            luminosité remplissage :
-            <input type="number" id="lightnessFill" value="0.9" step="0.1" min="0" max="1" >
-          </label><br />
-    
-    </div>
-    <div id="controls">
-        <label>
-            Saturation contour :
-            <input type="number" id="saturationStroke" value="0.7" step="0.1" min="0" max="1" >
-          </label><br />
-          <label>
-            luminosité contour :
-            <input type="number" id="lightnessStroke" value="0.5" step="0.1" min="0" max="1" >
-          </label><br />
-        
-    </div>
-      <button id="download">Télécharger le SVG</button>
-  </div>
+  <form id="controls">
+    <fieldset>
+      <legend>Structure</legend>
+      <label>
+        Nb d’items :
+        <input type="number" id="items" value="6" min="1" />
+      </label>
+      <label>
+        Tailles personnalisées (ex. 1,3,1) :
+        <input type="text" id="itemsSizes" value="" />
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Géométrie</legend>
+      <label>
+        Ratio intérieur :
+        <input type="number" id="ratio" value="0.6" step="0.05" min="0.00" max="0.95" />
+      </label>
+      <label>
+        Séparation (°) :
+        <input type="number" id="gap" value="3" step="0.5" min="0" max="25" />
+      </label>
+      <label>
+        Flèche (°) :
+        <input type="number" id="arrow" value="6" step="0.5" min="-25" max="25" />
+      </label>
+      <label>
+        Contour (px) :
+        <input type="number" id="stroke" value="2.5" step="0.5" min="0" max="10" />
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Couleurs remplissage</legend>
+      <label>
+        Saturation :
+        <input type="number" id="saturationFill" value="0.7" step="0.1" min="0" max="1" />
+      </label>
+      <label>
+        Luminosité :
+        <input type="number" id="lightnessFill" value="0.9" step="0.1" min="0" max="1" />
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Couleurs contour</legend>
+      <label>
+        Saturation :
+        <input type="number" id="saturationStroke" value="0.7" step="0.1" min="0" max="1" />
+      </label>
+      <label>
+        Luminosité :
+        <input type="number" id="lightnessStroke" value="0.5" step="0.1" min="0" max="1" />
+      </label>
+    </fieldset>
+
+    <button type="button" id="download">Télécharger le SVG</button>
+  </form>
 
   <div id="svg-container"></div>
 
   <script>
     const svgContainer = document.getElementById("svg-container");
+    const controlsForm = document.getElementById("controls");
     const btnDownload = document.getElementById("download");
 
-    {
-      const conf = JSON.parse(localStorage.getItem("ring-arrow-generator")) || {};
-      for (const el of document.querySelectorAll('input')) {
-        if (conf[el.id] ) {
-          el.value = conf[el.id];
-        }
-        el.onchange = generateSVG;
-      }
-    }
-
-    
-
-
-
     const SIZE = 420;
-    const CX = SIZE / 2;
-    const CY = SIZE / 2;
-    const R_OUTER = 160; // rayon de base
+    const CENTER = { x: SIZE / 2, y: SIZE / 2 };
+    const R_OUTER = 160;
 
+    const DEFAULT_CONF = {
+      items: 6,
+      itemsSizes: "",
+      ratio: 0.6,
+      gap: 3,
+      arrow: 6,
+      stroke: 2.5,
+      saturationFill: 0.7,
+      lightnessFill: 0.9,
+      saturationStroke: 0.7,
+      lightnessStroke: 0.5,
+    };
 
-// ===============================
-// Petites fonctions géométriques
-// ===============================
-function pt(x, y) {
-  return { x, y };
-}
+    function readConfigFromInputs() {
+      const config = {};
+      for (const input of controlsForm.elements) {
+        if (!(input instanceof HTMLInputElement)) continue;
+        config[input.id] = input.type === "number" ? parseFloat(input.value) : input.value.trim();
+      }
+      return config;
+    }
 
-function sub(a, b) {
-  return { x: a.x - b.x, y: a.y - b.y };
-}
+    function loadConfig() {
+      const stored = JSON.parse(localStorage.getItem("ring-arrow-generator") || "{}" );
+      const config = { ...DEFAULT_CONF, ...stored };
+      for (const input of controlsForm.elements) {
+        if (!(input instanceof HTMLInputElement) || !(input.id in config)) continue;
+        input.value = config[input.id];
+      }
+      return config;
+    }
 
-function add(a, b) {
-  return { x: a.x + b.x, y: a.y + b.y };
-}
+    function saveConfig(config) {
+      localStorage.setItem("ring-arrow-generator", JSON.stringify(config));
+    }
 
-function mul(v, k) {
-  return { x: v.x * k, y: v.y * k };
-}
+    function pt(x, y) {
+      return { x, y };
+    }
 
-function midpoint(a, b) {
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-}
+    function sub(a, b) {
+      return { x: a.x - b.x, y: a.y - b.y };
+    }
 
-function pointOnCircle(center, r, angleDeg) {
-  const t = (angleDeg * Math.PI) / 180;
-  return {
-    x: center.x + r * Math.cos(t),
-    y: center.y + r * Math.sin(t),
-  };
-}
+    function add(a, b) {
+      return { x: a.x + b.x, y: a.y + b.y };
+    }
 
-// droite passant par deux points
-function lineThrough(P, Q) {
-  return { P, Q }; // on garde juste ça
-}
+    function midpoint(a, b) {
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    }
 
-// droite passant par un point, parallèle à une autre droite
-function lineThroughParallelTo(point, line) {
-  // line = {P, Q}
-  const dir = sub(line.Q, line.P);
-  return { P: point, Q: add(point, dir) };
-}
+    function pointOnCircle(center, r, angleDeg) {
+      const t = (angleDeg * Math.PI) / 180;
+      return {
+        x: center.x + r * Math.cos(t),
+        y: center.y + r * Math.sin(t),
+      };
+    }
 
-// symétrie d’un point P par rapport à une droite (définie par deux points L1,L2)
-function reflectPointAcrossLine(P, L1, L2) {
-  const vx = L2.x - L1.x;
-  const vy = L2.y - L1.y;
-  const len2 = vx * vx + vy * vy;
-  if (len2 === 0) return { ...P };
+    function lineThrough(P, Q) {
+      return { P, Q };
+    }
 
-  // projection de L1P sur la ligne
-  const t = ((P.x - L1.x) * vx + (P.y - L1.y) * vy) / len2;
-  const proj = { x: L1.x + t * vx, y: L1.y + t * vy };
+    function lineThroughParallelTo(point, line) {
+      const dir = sub(line.Q, line.P);
+      return { P: point, Q: add(point, dir) };
+    }
 
-  // symétrique
-  return {
-    x: 2 * proj.x - P.x,
-    y: 2 * proj.y - P.y,
-  };
-}
+    function reflectPointAcrossLine(P, L1, L2) {
+      const vx = L2.x - L1.x;
+      const vy = L2.y - L1.y;
+      const len2 = vx * vx + vy * vy;
+      if (len2 === 0) return { ...P };
+      const t = ((P.x - L1.x) * vx + (P.y - L1.y) * vy) / len2;
+      const proj = { x: L1.x + t * vx, y: L1.y + t * vy };
+      return {
+        x: 2 * proj.x - P.x,
+        y: 2 * proj.y - P.y,
+      };
+    }
 
-// intersection de deux droites (P1,Q1) et (P2,Q2)
-function lineLineIntersection(l1, l2) {
-  const { P: A, Q: B } = l1;
-  const { P: C, Q: D } = l2;
+    function lineLineIntersection(l1, l2) {
+      const { P: A, Q: B } = l1;
+      const { P: C, Q: D } = l2;
 
-  const a1 = B.y - A.y;
-  const b1 = A.x - B.x;
-  const c1 = a1 * A.x + b1 * A.y;
+      const a1 = B.y - A.y;
+      const b1 = A.x - B.x;
+      const c1 = a1 * A.x + b1 * A.y;
 
-  const a2 = D.y - C.y;
-  const b2 = C.x - D.x;
-  const c2 = a2 * C.x + b2 * C.y;
+      const a2 = D.y - C.y;
+      const b2 = C.x - D.x;
+      const c2 = a2 * C.x + b2 * C.y;
 
-  const det = a1 * b2 - a2 * b1;
-  if (Math.abs(det) < 1e-9) {
-    return null; // parallèles
-  }
+      const det = a1 * b2 - a2 * b1;
+      if (Math.abs(det) < 1e-9) {
+        return null;
+      }
 
-  return {
-    x: (b2 * c1 - b1 * c2) / det,
-    y: (a1 * c2 - a2 * c1) / det,
-  };
-}
+      return {
+        x: (b2 * c1 - b1 * c2) / det,
+        y: (a1 * c2 - a2 * c1) / det,
+      };
+    }
 
-function vectorLength(v) {
-  return Math.hypot(v.x, v.y);
-}
+    function vectorLength(v) {
+      return Math.hypot(v.x, v.y);
+    }
 
-function normalize(v) {
-  const len = vectorLength(v);
-  if (!len) {
-    return { x: 0, y: 0 };
-  }
-  return { x: v.x / len, y: v.y / len };
-}
+    function normalize(v) {
+      const len = vectorLength(v);
+      if (!len) {
+        return { x: 0, y: 0 };
+      }
+      return { x: v.x / len, y: v.y / len };
+    }
 
+    function angleBisector(A, B, C) {
+      const v1 = normalize(sub(A, B));
+      const v2 = normalize(sub(C, B));
+      const dir = normalize(add(v1, v2));
+      if (Number.isNaN(dir.x) || Number.isNaN(dir.y)) {
+        return { P: B, Q: { x: B.x - v1.y, y: B.y + v1.x } };
+      }
+      return { P: B, Q: add(B, dir) };
+    }
 
-function angleBisector(A, B, C) {
-  const v1 = normalize(sub(A, B));
-  const v2 = normalize(sub(C, B));
-  const dir = normalize(add(v1, v2)); // vecteur milieu
+    function reflectLineAcrossLine(line, axis) {
+      const P1 = reflectPointAcrossLine(line.P, axis.P, axis.Q);
+      const P2 = reflectPointAcrossLine(line.Q, axis.P, axis.Q);
+      return { P: P1, Q: P2 };
+    }
 
-  // cas angle plat : on peut prendre un vecteur orthogonal
-  if (isNaN(dir.x) || isNaN(dir.y)) {
-    // v1 et v2 opposés → on prend un vecteur perpendiculaire à v1
-    return { P: B, Q: { x: B.x - v1.y, y: B.y + v1.x } };
-  }
+    function lineCircleIntersections(P, Q, C, r) {
+      const dx = Q.x - P.x;
+      const dy = Q.y - P.y;
+      const fx = P.x - C.x;
+      const fy = P.y - C.y;
 
-  return { P: B, Q: add(B, dir) };
-}
+      const a = dx * dx + dy * dy;
+      const b = 2 * (fx * dx + fy * dy);
+      const c = fx * fx + fy * fy - r * r;
 
-// symétrie d’une droite (def. par deux points) par rapport à une autre droite
-function reflectLineAcrossLine(line, axis) {
-  const P1 = reflectPointAcrossLine(line.P, axis.P, axis.Q);
-  const P2 = reflectPointAcrossLine(line.Q, axis.P, axis.Q);
-  return { P: P1, Q: P2 };
-}
+      const disc = b * b - 4 * a * c;
+      if (disc < 0) return [];
 
-/**
- * Intersections d'une droite P->Q avec un cercle (centre C, rayon r)
- * On retourne les intersections ordonnées par le paramètre t
- * sur la droite paramétrée P + t*(Q-P)
- */
-function lineCircleIntersections(P, Q, C, r) {
-  const dx = Q.x - P.x;
-  const dy = Q.y - P.y;
-  const fx = P.x - C.x;
-  const fy = P.y - C.y;
+      const s = Math.sqrt(disc);
+      const t1 = (-b - s) / (2 * a);
+      const t2 = (-b + s) / (2 * a);
 
-  const a = dx * dx + dy * dy;
-  const b = 2 * (fx * dx + fy * dy);
-  const c = fx * fx + fy * fy - r * r;
+      const I1 = { x: P.x + t1 * dx, y: P.y + t1 * dy };
+      const I2 = { x: P.x + t2 * dx, y: P.y + t2 * dy };
 
-  const disc = b * b - 4 * a * c;
-  if (disc < 0) return [];
+      const d1 = Math.hypot(I1.x - P.x, I1.y - P.y);
+      const d2 = Math.hypot(I2.x - P.x, I2.y - P.y);
 
-  const s = Math.sqrt(disc);
-  const t1 = (-b - s) / (2 * a);
-  const t2 = (-b + s) / (2 * a);
+      return d1 <= d2 ? [I1, I2] : [I2, I1];
+    }
 
-  const I1 = { x: P.x + t1 * dx, y: P.y + t1 * dy, t: t1 };
-  const I2 = { x: P.x + t2 * dx, y: P.y + t2 * dy, t: t2 };
-
-  // on trie selon la distance à P (donc t1 < t2 si Q est dans le sens croissant)
-  const d1 = Math.hypot(I1.x - P.x, I1.y - P.y);
-  const d2 = Math.hypot(I2.x - P.x, I2.y - P.y);
-
-  return d1 <= d2 ? [I1, I2] : [I2, I1];
-}
-
-function nearestOf(points, P) {
-    let nearest = null;
-    for (const point of points) {
-        if (nearest === null || (Math.hypot(point.x - P.x, point.y - P.y) < Math.hypot(nearest.x - P.x, nearest.y - P.y))) {
-            nearest = point;
+    function nearestOf(points, P) {
+      let nearest = null;
+      for (const point of points) {
+        if (
+          nearest === null ||
+          Math.hypot(point.x - P.x, point.y - P.y) < Math.hypot(nearest.x - P.x, nearest.y - P.y)
+        ) {
+          nearest = point;
         }
+      }
+      return nearest;
     }
-    return nearest;
-}
 
-/**
- * Intersections d'une DEMI-droite (origine P, passant par Q)
- * avec un cercle. On ne garde que celles avec t >= 0,
- * et on les ordonne comme GeoGebra (1, 2, ...)
- */
-function rayCircleIntersections(P, Q, C, r) {
-  const all = lineCircleIntersections(P, Q, C, r);
-  const dir = sub(Q, P);
-  // on garde seulement celles dans le bon sens (t >= 0)
-  const res = [];
-  for (const inter of all) {
-    // recalcul t
-    const t = (dir.x !== 0) ? (inter.x - P.x) / dir.x : (inter.y - P.y) / dir.y;
-    if (t >= -1e-9) {
-      res.push(inter);
+    function lineThroughPerpendicularTo(point, line) {
+      const dir = sub(line.Q, line.P);
+      const perp = { x: -dir.y, y: dir.x };
+      return { P: point, Q: add(point, perp) };
     }
-  }
-  return res;
-}
 
-/**
- * Symétrie d'un point P par rapport à la droite passant par S1-S2
- */
-function symmetricPoint(P, S1, S2) {
-  const vx = S2.x - S1.x;
-  const vy = S2.y - S1.y;
-  const len2 = vx * vx + vy * vy;
-  if (len2 === 0) return { ...P };
-  // projection
-  const t = ((P.x - S1.x) * vx + (P.y - S1.y) * vy) / len2;
-  const proj = { x: S1.x + t * vx, y: S1.y + t * vy };
-  // symétrique
-  return {
-    x: 2 * proj.x - P.x,
-    y: 2 * proj.y - P.y,
-  };
-}
+    function hsvToHex(h, s, v) {
+      const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+      const [r, g, b] = [5, 3, 1].map((n) => Math.round(f(n) * 255));
+      return `#${[r, g, b]
+        .map((x) => x.toString(16).padStart(2, "0"))
+        .join("")}`;
+    }
 
-// droite passant par un point, perpendiculaire à une autre droite
-function lineThroughPerpendicularTo(point, line) {
-  // direction de la droite de référence
-  const dir = sub(line.Q, line.P);
+    function buildArrowV2({
+      O = pt(0, 0),
+      angleE = 10,
+      angleEO = 40,
+      angleF = 90,
+      rOuter = 160,
+      rInner = 100,
+    } = {}) {
+      const E = pointOnCircle(O, rOuter, angleE);
+      const EO = pointOnCircle(O, rOuter, angleEO);
+      const h = lineThrough(O, E);
+      const SO = reflectPointAcrossLine(EO, h.P, h.Q);
+      const g = lineThroughParallelTo(EO, h);
+      const inter_d_g = lineCircleIntersections(g.P, g.Q, O, rInner);
+      const EI = nearestOf(inter_d_g, E);
+      const F = pointOnCircle(O, rOuter, angleF);
+      const i = lineThrough(F, O);
+      const inter_d_i = lineCircleIntersections(i.P, i.Q, O, rInner);
+      const C = nearestOf(inter_d_i, E);
+      const D = midpoint(F, C);
+      const k = lineThrough(E, D);
+      const inter_d_h = lineCircleIntersections(h.P, h.Q, O, rInner);
+      const G = nearestOf(inter_d_h, E);
+      const l = lineThrough(D, G);
+      const m = lineThroughParallelTo(EO, k);
+      const n = lineThroughParallelTo(SO, k);
+      const p = lineThroughParallelTo(EI, l);
 
-  // vecteur perpendiculaire : rotation de 90° (x, y) → (-y, x)
-  const perp = { x: -dir.y, y: dir.x };
+      let EA;
+      let q;
+      if (angleF === angleE) {
+        EA = midpoint(EO, EI);
+        q = lineThroughPerpendicularTo(EA, lineThrough(EO, EI));
+      } else {
+        EA = lineLineIntersection(m, p);
+        q = angleBisector(EO, EA, EI);
+      }
 
-  // on crée la nouvelle droite : point de départ = point donné, point suivant = point + vecteur perpendiculaire
-  return { P: point, Q: add(point, perp) };
-}
+      const nPrime = reflectLineAcrossLine(n, q);
+      const inter_d_nPrime = lineCircleIntersections(nPrime.P, nPrime.Q, O, rInner);
+      const SI = nearestOf(inter_d_nPrime, E);
 
+      const SA = angleF === angleE ? midpoint(SO, SI) : lineLineIntersection(n, nPrime);
 
-function hsvToHex(h, s, v) {
-  let f = (n, k = (n + h / 60) % 6) =>
-    v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
-  const r = Math.round(f(5) * 255);
-  const g = Math.round(f(3) * 255);
-  const b = Math.round(f(1) * 255);
-  return (
-    "#" +
-    [r, g, b]
-      .map((x) => x.toString(16).padStart(2, "0"))
-      .join("")
-  );
-}
-// ===============================
-// Construction d'après ton GeoGebra
-// ===============================
-function buildArrowFromGeoGebra({
-    A = pt(0,0),
-  angleB = 0,
-  angleD = 60,
-  angleH = 120,
-  rOuter = 50,
-  rInner = 30,
-} = {}) {
-  // A = (0,0)
+      return { EA, SA, SI, EI, SO, EO };
+    }
 
-  // c = cercle(A, 50) -> rOuter
-  // d = cercle(A, 30) -> rInner
+    function buildArrowAtAngle(angle, conf, outerR) {
+      return buildArrowV2({
+        O: pt(CENTER.x, CENTER.y),
+        angleE: angle,
+        angleEO: angle - conf.gap,
+        angleF: angle + conf.arrow,
+        rOuter: outerR,
+        rInner: outerR * conf.ratio,
+      });
+    }
 
-  // B = Point(c)
-  const B = pointOnCircle(A, rOuter, angleB);
-
-  // f = Droite(A, B)
-  // C = Intersection(d, f, 2)
-  const interAB_d = lineCircleIntersections(B, A, A, rInner);
-  const C = interAB_d[0]; // (… , 2)
-
-  // D = Point(c)
-  const D = pointOnCircle(A, rOuter, angleD);
-
-  // g = Segment(A, D)
-  // E = Intersection(d, g, 1)
-  const interAD_d = lineCircleIntersections(D, A, A, rInner);
-  const E = interAD_d[0]; // (… , 1)
-
-  // EA = MilieuCentre(B, C)
-  const EA = midpoint(B, C);
-
-  // SA = MilieuCentre(D, E)
-  const SA = midpoint(D, E);
-
-  // j = Segment(EA, SA) -> on garde juste les deux points EA, SA
-
-  // H = Point(c)
-  const H = pointOnCircle(A, rOuter, angleH);
-
-  // l = Droite(A, H)
-  // SI = Intersection(d, l, 2)
-  const interAH_d = lineCircleIntersections(H, A, A, rInner);
-  const SI = interAH_d[0]; // (… , 2)
-
-  // m = Segment(SA, SI) -> on garde SA, SI
-
-  // u = Vecteur(SA, SI)
-  const u = sub(SI, SA);
-
-  // F' = Translation(EA, u)
-  const Fprime = add(EA, u);
-
-  // n = DemiDroite(EA, F')
-  // EI = Intersection(d, n, 1)
-  const interRayEA_Fp_d = rayCircleIntersections(EA, Fprime, A, rInner);
-  const EI = interRayEA_Fp_d[0]; // (… , 1)
-
-  // EI' = Symétrie(SI, j)  (symétrie de SI par rapport à EA-SA)
-  const EIprime = symmetricPoint(SI, EA, SA);
-
-  // p = DemiDroite(SA, EI')
-  // SO = Intersection(c, p, 1)
-  const interRaySA_EIp_c = rayCircleIntersections(SA, EIprime, A, rOuter);
-  const SO = interRaySA_EIp_c[0]; // (… , 1)
-
-  // v = Vecteur(SA, EA)
-  const v = sub(EA, SA);
-
-  // EI'' = Translation(EI', v)
-  const EIdblPrime = add(EIprime, v);
-
-  // p' = DemiDroite(EA, EI'')
-  // EO = Intersection(c, p', 1)
-  const interRayEA_EIdbl_c = rayCircleIntersections(EA, EIdblPrime, A, rOuter);
-  const EO = interRayEA_EIdbl_c[0]; // (… , 1)
-
-  return {
-    EA,
-    SA,
-    SI,
-    EI,
-    SO,
-    EO,
-  };
-}
-
-// ===============================
-// Construction selon "Géométrie - GeoGebra v2"
-// ===============================
-function buildArrowV2({
-    O = pt(0,0),
-  angleE = 10,
-  angleEO = 40,
-  angleF = 90,
-  rOuter = 160,
-  rInner = 100,
-} = {}) {
-  // O = (0,0)
-
-  // c = Cercle(O, 160)
-  // d = Cercle(O, 100)
-
-  // E = Point(c)
-  const E = pointOnCircle(O, rOuter, angleE);
-
-  // EO = Point(c)
-  const EO = pointOnCircle(O, rOuter, angleEO);
-
-  // h = Droite(O, E)
-  const h = lineThrough(O, E);
-
-  // SO = Symétrie(EO, h)
-  const SO = reflectPointAcrossLine(EO, h.P, h.Q);
-
-  // g = Droite(EO, h)  => ligne par EO parallèle à h
-  const g = lineThroughParallelTo(EO, h);
-
-  // EI = Intersection(d, g, 2)
-  const inter_d_g = lineCircleIntersections(g.P, g.Q, O, rInner);
-  const EI = nearestOf(inter_d_g, E); // (… , 2)
-
-  // F = Point(c)
-  const F = pointOnCircle(O, rOuter, angleF);
-
-  // i = Droite(F, O)
-  const i = lineThrough(F, O);
-
-  // C = Intersection(d, i, 1)
-  const inter_d_i = lineCircleIntersections(i.P, i.Q, O, rInner);
-  const C = nearestOf(inter_d_i, E); // (… , 1)
-
-  // D = MilieuCentre(F, C)
-  const D = midpoint(F, C);
-
-  // k = Segment(E, D) -> on s’en sert comme direction
-  const k = lineThrough(E, D);
-
-  // G = Intersection(d, h, 2)
-  const inter_d_h = lineCircleIntersections(h.P, h.Q, O, rInner);
-  const G = nearestOf(inter_d_h, E); // (… , 2)
-
-  // l = Segment(D, G)
-  const l = lineThrough(D, G);
-
-  // m = Droite(EO, k) -> par EO // à k
-  const m = lineThroughParallelTo(EO, k);
-
-  // n = Droite(SO, k) -> par SO // à k
-  const n = lineThroughParallelTo(SO, k);
-
-  // p = Droite(EI, l) -> par EI // à l
-  const p = lineThroughParallelTo(EI, l);
-
-  let EA;
-  let q;
-  //let q;
-  if (angleF == angleE) {
-    EA = midpoint(EO, EI);
-    q = lineThroughPerpendicularTo(EA, lineThrough(EO, EI))
-
-  } else {
-    // EA = Intersection(m, p)
-    EA = lineLineIntersection(m, p);
-  // q = Bissectrice(EO, EA, EI)
-  q = angleBisector(EO, EA, EI);
-  }
-
-
-  // n' = Symétrie(n, q)
-  const nPrime = reflectLineAcrossLine(n, q);
-
-  // SI = Intersection(d, n', 2)
-  const inter_d_nPrime = lineCircleIntersections(nPrime.P, nPrime.Q, O, rInner);
-  const SI = nearestOf(inter_d_nPrime, E); // (… , 2)
-
-  let SA;
-  if (angleF == angleE) {
-    SA = midpoint(SO, SI);
-
-  } else {
-    // SA = Intersection(n, n')
-    SA = lineLineIntersection(n, nPrime);
-  }
-
-  return {
-    EA,
-    SA,
-    SI,
-    EI,
-    SO,
-    EO,
-  };
-}
-    /**
-     * Forme :
-     * M outerStart
-     * A outer ... outerEnd
-     * L outerTip (même angle que fin, rayon + depthOuter)
-     * L innerEnd
-     * A inner ... innerStart
-     * L innerTip (même angle que début, rayon - depthInner)
-     * L outerStart
-     * Z
-     */
     function createArrowSlice(item, outerR, total, conf) {
-
-         const startArrow = buildArrowV2( {
-            O: pt(CX, CY),
-            angleE: item.start,
-            angleEO: item.start - conf.gap,
-            angleF: item.start + conf.arrow,
-            rOuter: outerR,
-            rInner: outerR * conf.ratio,
-         })
-
-         const endArrow = buildArrowV2( {
-            O: pt(CX, CY),
-            angleE: item.end,
-            angleEO: item.end - conf.gap,
-            angleF: item.end + conf.arrow,
-            rOuter: outerR,
-            rInner: outerR * conf.ratio,
-         })
-
-
-      console.log(startArrow.SO, endArrow.EO, endArrow.EA, endArrow.EI, startArrow.SI, startArrow.SA)
+      const startArrow = buildArrowAtAngle(item.start, conf, outerR);
+      const endArrow = buildArrowAtAngle(item.end, conf, outerR);
 
       const sweep = item.end - item.start;
       const largeArc = sweep > 180 ? 1 : 0;
-
+      const innerR = outerR * conf.ratio;
 
       const d = [
         `M ${startArrow.SO.x} ${startArrow.SO.y}`,
         `A ${outerR} ${outerR} 0 ${largeArc} 1 ${endArrow.EO.x} ${endArrow.EO.y}`,
         `L ${endArrow.EA.x} ${endArrow.EA.y}`,
         `L ${endArrow.EI.x} ${endArrow.EI.y}`,
-        `A ${outerR * conf.ratio} ${outerR * conf.ratio} 0 ${largeArc} 0 ${startArrow.SI.x} ${startArrow.SI.y}`,
+        `A ${innerR} ${innerR} 0 ${largeArc} 0 ${startArrow.SI.x} ${startArrow.SI.y}`,
         `L ${startArrow.SA.x} ${startArrow.SA.y}`,
-        `L ${startArrow.SO.x} ${startArrow.SO.y}`,
-        "Z"
+        `Z`,
       ].join(" ");
 
       const hue = Math.round((item.index / total) * 360);
       const fill = hsvToHex(hue, conf.saturationFill, conf.lightnessFill);
       const strokeColor = hsvToHex(hue, conf.saturationStroke, conf.lightnessStroke);
-
 
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute("d", d);
@@ -604,62 +428,54 @@ function buildArrowV2({
       return path;
     }
 
-    function generateSVG() {
+    function parseItems(config) {
+      if (!config.itemsSizes) {
+        const count = Math.max(1, Math.round(config.items));
+        return Array.from({ length: count }, (_, index) => ({
+          index,
+          start: (index * 360) / count,
+          end: ((index + 1) * 360) / count,
+        }));
+      }
 
-        const conf = {}
+      const sizes = config.itemsSizes
+        .split(",")
+        .map((value) => parseFloat(value.trim()))
+        .filter((value) => Number.isFinite(value) && value > 0);
 
-        for (const el of document.querySelectorAll('input')) {
-            if (el.type === "number") {
-                conf[el.id] = parseFloat(el.value);
-            } else {
-                conf[el.id] = el.value;
-            }
-        }
-        localStorage.setItem("ring-arrow-generator", JSON.stringify(conf))
+      const sum = sizes.reduce((acc, value) => acc + value, 0);
+      if (!sum) {
+        return parseItems({ ...config, itemsSizes: "" });
+      }
 
+      let start = 0;
+      return sizes.map((size, index) => {
+        const sweep = (size / sum) * 360;
+        const item = { index, start, end: start + sweep };
+        start += sweep;
+        return item;
+      });
+    }
+
+    function renderSvg(config) {
       svgContainer.innerHTML = "";
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", SIZE);
       svg.setAttribute("height", SIZE);
       svg.setAttribute("viewBox", `0 0 ${SIZE} ${SIZE}`);
 
-      let items = []
-      let itemsSizeSum = 0;
-      if (conf.itemsSizes === "") {
-        itemsSizeSum = conf.items;
-        for (let i = 0; i < itemsSizeSum; i++) {
-            const start = i * 360 / conf.items ;
-            const end = (i + 1) * 360 / conf.items;
-            items.push({start, end, index:i})
-        }
-      } else {
-        const s = conf.itemsSizes.split(',');
-        let index = 0;
-        for (const v of s) {
-            items.push({index, size: parseFloat(v)});
-            index += 1;
-        }
-        itemsSizeSum = items.reduce((a, b) => a + b.size, 0);
-        let start = 0;
-        for (const item of items) {
-            const end = start + item.size / itemsSizeSum * 360;
-            item.start = start;
-            item.end = end;
-            start = end;
-        }
-      }
-
+      const items = parseItems(config);
       for (const item of items) {
-        const slice = createArrowSlice(
-          item,
-          R_OUTER,
-          items.length,
-          conf
-        );
-        svg.appendChild(slice);
+        svg.appendChild(createArrowSlice(item, R_OUTER, items.length, config));
       }
 
       svgContainer.appendChild(svg);
+    }
+
+    function generateSvgFromInputs() {
+      const config = readConfigFromInputs();
+      saveConfig(config);
+      renderSvg(config);
     }
 
     function downloadSVG() {
@@ -680,9 +496,11 @@ function buildArrowV2({
       URL.revokeObjectURL(url);
     }
 
-    btnDownload.addEventListener("click", downloadSVG);
-    generateSVG();
+    const initialConfig = loadConfig();
+    renderSvg(initialConfig);
 
+    controlsForm.addEventListener("input", generateSvgFromInputs);
+    btnDownload.addEventListener("click", downloadSVG);
   </script>
 </body>
 </html>
