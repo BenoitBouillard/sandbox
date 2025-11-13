@@ -37,6 +37,8 @@ const templates = [
   },
 ];
 
+const STORAGE_KEY = "photoCanvasState";
+
 const state = {
   selectedTemplate: templates[0],
   slotData: {},
@@ -70,7 +72,7 @@ function updateTemplateMeta() {
   templateMeta.textContent = state.selectedTemplate.description;
 }
 
-function createSlotInputs() {
+function createSlotInputs(persistedSlots = {}) {
   slotsContainer.innerHTML = "";
   state.slotData = {};
 
@@ -96,7 +98,7 @@ function createSlotInputs() {
     const controls = document.createElement("div");
     controls.className = "slot-controls";
 
-    const slotState = createSlotState();
+    const slotState = createSlotState(persistedSlots[index]);
     state.slotData[index] = slotState;
 
     const zoomControl = createSliderControl({
@@ -111,6 +113,7 @@ function createSlotInputs() {
         if (!slotState.image) return;
         slotState.zoom = value;
         render();
+        persistState();
       },
     });
     zoomControl.input.dataset.slotIndex = index;
@@ -127,6 +130,7 @@ function createSlotInputs() {
         if (!slotState.image) return;
         slotState.rotation = value;
         render();
+        persistState();
       },
     });
     rotationControl.input.dataset.slotIndex = index;
@@ -136,9 +140,7 @@ function createSlotInputs() {
 
     const hint = document.createElement("p");
     hint.className = "slot-hint";
-    hint.textContent = "Drag the preview to reposition the photo.";
-
-    enablePreviewDragging(preview, index, slotState);
+    hint.textContent = "Drag the photo directly on the canvas to reposition it.";
 
     card.appendChild(title);
     card.appendChild(preview);
@@ -146,9 +148,13 @@ function createSlotInputs() {
     card.appendChild(controls);
     card.appendChild(hint);
     slotsContainer.appendChild(card);
+
+    if (persistedSlots[index]?.imageSrc) {
+      restoreSlotFromPersistedData(index, preview, persistedSlots[index]);
+    }
   });
 
-  downloadButton.disabled = true;
+  updateDownloadState();
 }
 
 function createSliderControl({ key, label, min, max, step, valueFormatter, onInput, initial }) {
@@ -190,13 +196,13 @@ function createSliderControl({ key, label, min, max, step, valueFormatter, onInp
   return { wrapper, input, valueElement: value };
 }
 
-function createSlotState() {
+function createSlotState(initialData = {}) {
   return {
-    image: null,
-    zoom: 1,
-    rotation: 0,
-    offsetX: 0,
-    offsetY: 0,
+    image: initialData.image ?? null,
+    zoom: initialData.zoom ?? 1,
+    rotation: initialData.rotation ?? 0,
+    offsetX: initialData.offsetX ?? 0,
+    offsetY: initialData.offsetY ?? 0,
   };
 }
 
@@ -209,6 +215,7 @@ function handleFileChange(slotIndex, file, previewElement) {
     resetPreview(previewElement);
     updateDownloadState();
     render();
+    persistState();
     return;
   }
 
@@ -225,12 +232,14 @@ function handleFileChange(slotIndex, file, previewElement) {
       syncSlotControls(slotIndex);
       updateDownloadState();
       render();
+      persistState();
     };
     img.onerror = () => {
       alert("Unable to load that file. Please try another image.");
       resetSlotState(slotIndex);
       resetPreview(previewElement);
       updateDownloadState();
+      persistState();
     };
     img.src = e.target?.result;
   };
@@ -254,6 +263,28 @@ function updatePreview(preview, src) {
   hint.textContent = "Drag to move";
   preview.appendChild(img);
   preview.appendChild(hint);
+}
+
+function restoreSlotFromPersistedData(slotIndex, previewElement, persistedSlot) {
+  const slotState = state.slotData[slotIndex];
+  if (!slotState) return;
+
+  const img = new Image();
+  img.onload = () => {
+    slotState.image = img;
+    slotState.zoom = persistedSlot.zoom ?? 1;
+    slotState.rotation = persistedSlot.rotation ?? 0;
+    slotState.offsetX = persistedSlot.offsetX ?? 0;
+    slotState.offsetY = persistedSlot.offsetY ?? 0;
+    updatePreview(previewElement, img.src);
+    syncSlotControls(slotIndex);
+    updateDownloadState();
+    render();
+  };
+  img.onerror = () => {
+    console.warn("Failed to restore persisted slot", slotIndex);
+  };
+  img.src = persistedSlot.imageSrc;
 }
 
 function updateDownloadState() {
@@ -367,58 +398,131 @@ function syncSlotControls(slotIndex) {
   }
 }
 
-function enablePreviewDragging(preview, slotIndex, slotState) {
-  let activePointer = null;
-  let lastX = 0;
-  let lastY = 0;
+const canvasDragState = {
+  pointerId: null,
+  slotIndex: null,
+  lastX: 0,
+  lastY: 0,
+};
 
-  const handlePointerDown = (event) => {
-    if (!slotState.image) return;
-    activePointer = event.pointerId;
-    lastX = event.clientX;
-    lastY = event.clientY;
-    preview.setPointerCapture(activePointer);
-    preview.classList.add("is-dragging");
+function enableCanvasDragging() {
+  canvas.addEventListener("pointerdown", handleCanvasPointerDown);
+  canvas.addEventListener("pointermove", handleCanvasPointerMove);
+  canvas.addEventListener("pointerup", handleCanvasPointerEnd);
+  canvas.addEventListener("pointerleave", handleCanvasPointerEnd);
+  canvas.addEventListener("pointercancel", handleCanvasPointerEnd);
+}
+
+function handleCanvasPointerDown(event) {
+  const { x, y } = getCanvasCoordinates(event);
+  const hit = findSlotUnderPoint(x, y);
+  if (!hit) return;
+
+  const slotState = state.slotData[hit.index];
+  if (!slotState?.image) return;
+
+  canvasDragState.pointerId = event.pointerId;
+  canvasDragState.slotIndex = hit.index;
+  canvasDragState.lastX = x;
+  canvasDragState.lastY = y;
+  canvas.setPointerCapture(event.pointerId);
+}
+
+function handleCanvasPointerMove(event) {
+  if (canvasDragState.pointerId !== event.pointerId) return;
+  const slotState = state.slotData[canvasDragState.slotIndex];
+  if (!slotState?.image) return;
+
+  const { x, y } = getCanvasCoordinates(event);
+  const dx = x - canvasDragState.lastX;
+  const dy = y - canvasDragState.lastY;
+  canvasDragState.lastX = x;
+  canvasDragState.lastY = y;
+
+  slotState.offsetX += dx;
+  slotState.offsetY += dy;
+  render();
+}
+
+function handleCanvasPointerEnd(event) {
+  if (canvasDragState.pointerId !== event.pointerId) return;
+  canvas.releasePointerCapture(event.pointerId);
+  const slotIndex = canvasDragState.slotIndex;
+  canvasDragState.pointerId = null;
+  canvasDragState.slotIndex = null;
+  if (slotIndex !== null) {
+    persistState();
+  }
+}
+
+function getCanvasCoordinates(event) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
   };
+}
 
-  const handlePointerMove = (event) => {
-    if (activePointer !== event.pointerId || !slotState.image) return;
-    const dx = event.clientX - lastX;
-    const dy = event.clientY - lastY;
-    lastX = event.clientX;
-    lastY = event.clientY;
+function findSlotUnderPoint(x, y) {
+  const template = state.selectedTemplate;
+  const margin = Number(marginInput.value);
 
-    const rect = preview.getBoundingClientRect();
-    const margin = Number(marginInput.value);
-    const metrics = getSlotMetrics(state.selectedTemplate.slots[slotIndex], canvas.width, canvas.height, margin);
-    const slotWidth = metrics.width;
-    const slotHeight = metrics.height;
-
-    if (slotWidth > 0) {
-      slotState.offsetX += (dx / rect.width) * slotWidth;
+  for (let index = 0; index < template.slots.length; index += 1) {
+    const metrics = getSlotMetrics(template.slots[index], canvas.width, canvas.height, margin);
+    if (metrics.width <= 0 || metrics.height <= 0) continue;
+    const withinX = x >= metrics.x && x <= metrics.x + metrics.width;
+    const withinY = y >= metrics.y && y <= metrics.y + metrics.height;
+    if (withinX && withinY) {
+      return { index, metrics };
     }
-    if (slotHeight > 0) {
-      slotState.offsetY += (dy / rect.height) * slotHeight;
-    }
-    render();
-  };
+  }
 
-  const endPointer = (event) => {
-    if (activePointer !== event.pointerId) return;
-    preview.classList.remove("is-dragging");
-    preview.releasePointerCapture(activePointer);
-    activePointer = null;
-  };
-
-  preview.addEventListener("pointerdown", handlePointerDown);
-  preview.addEventListener("pointermove", handlePointerMove);
-  preview.addEventListener("pointerup", endPointer);
-  preview.addEventListener("pointerleave", endPointer);
-  preview.addEventListener("pointercancel", endPointer);
+  return null;
 }
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function loadPersistedState() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+    return JSON.parse(stored);
+  } catch (error) {
+    console.warn("Unable to load persisted photo canvas state", error);
+    return null;
+  }
+}
+
+function persistState() {
+  try {
+    const payload = {
+      selectedTemplateId: state.selectedTemplate.id,
+      canvasWidth: canvasWidthInput.value,
+      backgroundColor: backgroundInput.value,
+      margin: marginInput.value,
+      radius: radiusInput.value,
+      slotData: {},
+    };
+
+    Object.entries(state.slotData).forEach(([index, slotState]) => {
+      if (!slotState.image) return;
+      payload.slotData[index] = {
+        imageSrc: slotState.image.src,
+        zoom: slotState.zoom,
+        rotation: slotState.rotation,
+        offsetX: slotState.offsetX,
+        offsetY: slotState.offsetY,
+      };
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.warn("Unable to persist photo canvas state", error);
+  }
 }
 
 function downloadImage() {
@@ -429,9 +533,33 @@ function downloadImage() {
 }
 
 function init() {
+  const persistedState = loadPersistedState();
+  if (persistedState) {
+    const persistedTemplate = templates.find((tpl) => tpl.id === persistedState.selectedTemplateId);
+    if (persistedTemplate) {
+      state.selectedTemplate = persistedTemplate;
+    }
+    if (typeof persistedState.canvasWidth !== "undefined") {
+      canvasWidthInput.value = persistedState.canvasWidth;
+    }
+    if (typeof persistedState.backgroundColor !== "undefined") {
+      backgroundInput.value = persistedState.backgroundColor;
+    }
+    if (typeof persistedState.margin !== "undefined") {
+      marginInput.value = persistedState.margin;
+    }
+    if (typeof persistedState.radius !== "undefined") {
+      radiusInput.value = persistedState.radius;
+    }
+  }
+
+  marginValue.textContent = `${marginInput.value} px`;
+  radiusValue.textContent = `${radiusInput.value} px`;
+
   populateTemplates();
-  createSlotInputs();
+  createSlotInputs(persistedState?.slotData ?? {});
   render();
+  enableCanvasDragging();
 
   templateSelect.addEventListener("change", () => {
     const selected = templates.find((tpl) => tpl.id === templateSelect.value);
@@ -440,6 +568,7 @@ function init() {
     updateTemplateMeta();
     createSlotInputs();
     render();
+    persistState();
   });
 
   [canvasWidthInput, backgroundInput, marginInput, radiusInput].forEach((input) => {
@@ -447,6 +576,7 @@ function init() {
       marginValue.textContent = `${marginInput.value} px`;
       radiusValue.textContent = `${radiusInput.value} px`;
       render();
+      persistState();
     });
   });
 
