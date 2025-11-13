@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photo Canvas Builder</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Photo Canvas Builder</h1>
+      <p class="lede">
+        Assemble a collage-ready canvas in just a few clicks. Choose a template, drop in photos,
+        fine-tune spacing, and export a crisp PNG.
+      </p>
+    </header>
+    <main>
+      <section class="panel" aria-label="Editor controls">
+        <fieldset>
+          <label>
+            Template
+            <select id="templateSelect"></select>
+            <div class="template-meta" id="templateMeta"></div>
+          </label>
+          <label>
+            Canvas width (px)
+            <input type="number" id="canvasWidth" value="1200" min="600" max="2200" step="50" />
+          </label>
+          <label>
+            Background color
+            <input type="color" id="backgroundColor" value="#ffffff" />
+          </label>
+          <label>
+            Margin between photos
+            <input type="range" id="margin" value="24" min="0" max="80" />
+            <span id="marginValue">24 px</span>
+          </label>
+          <label>
+            Corner roundness
+            <input type="range" id="radius" value="28" min="0" max="150" />
+            <span id="radiusValue">28 px</span>
+          </label>
+        </fieldset>
+        <section>
+          <h2 style="margin: 1rem 0 0.5rem; font-size: 1rem;">Photos</h2>
+          <div id="slots" class="slot-grid"></div>
+        </section>
+        <button id="download" disabled>Download PNG</button>
+      </section>
+      <section class="panel" aria-label="Canvas preview">
+        <canvas id="canvas" width="1200" height="1200"></canvas>
+      </section>
+    </main>
+    <script src="app.js" defer></script>
+  </body>
+</html>
