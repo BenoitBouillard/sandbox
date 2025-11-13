@@ -39,7 +39,7 @@ const templates = [
 
 const state = {
   selectedTemplate: templates[0],
-  images: {},
+  slotData: {},
 };
 
 const templateSelect = document.getElementById("templateSelect");
@@ -72,11 +72,12 @@ function updateTemplateMeta() {
 
 function createSlotInputs() {
   slotsContainer.innerHTML = "";
-  state.images = {};
+  state.slotData = {};
 
   state.selectedTemplate.slots.forEach((_, index) => {
     const card = document.createElement("div");
     card.className = "slot-card";
+    card.dataset.slotIndex = index;
 
     const title = document.createElement("strong");
     title.textContent = `Slot ${index + 1}`;
@@ -85,24 +86,126 @@ function createSlotInputs() {
     preview.className = "slot-preview";
     preview.id = `preview-${index}`;
     preview.textContent = "Drop a photo";
+    preview.dataset.slotIndex = index;
 
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = "image/*";
     fileInput.addEventListener("change", (event) => handleFileChange(index, event.target.files?.[0], preview));
 
+    const controls = document.createElement("div");
+    controls.className = "slot-controls";
+
+    const slotState = createSlotState();
+    state.slotData[index] = slotState;
+
+    const zoomControl = createSliderControl({
+      key: "zoom",
+      label: "Zoom",
+      min: 1,
+      max: 3,
+      step: 0.01,
+      initial: 1,
+      valueFormatter: (value) => `${Math.round(value * 100)}%`,
+      onInput: (value) => {
+        if (!slotState.image) return;
+        slotState.zoom = value;
+        render();
+      },
+    });
+    zoomControl.input.dataset.slotIndex = index;
+
+    const rotationControl = createSliderControl({
+      key: "rotation",
+      label: "Rotation",
+      min: -180,
+      max: 180,
+      step: 1,
+      initial: 0,
+      valueFormatter: (value) => `${Math.round(value)}°`,
+      onInput: (value) => {
+        if (!slotState.image) return;
+        slotState.rotation = value;
+        render();
+      },
+    });
+    rotationControl.input.dataset.slotIndex = index;
+
+    controls.appendChild(zoomControl.wrapper);
+    controls.appendChild(rotationControl.wrapper);
+
+    const hint = document.createElement("p");
+    hint.className = "slot-hint";
+    hint.textContent = "Drag the preview to reposition the photo.";
+
+    enablePreviewDragging(preview, index, slotState);
+
     card.appendChild(title);
     card.appendChild(preview);
     card.appendChild(fileInput);
+    card.appendChild(controls);
+    card.appendChild(hint);
     slotsContainer.appendChild(card);
   });
 
   downloadButton.disabled = true;
 }
 
+function createSliderControl({ key, label, min, max, step, valueFormatter, onInput, initial }) {
+  const wrapper = document.createElement("label");
+  wrapper.className = "slot-control";
+
+  const topRow = document.createElement("div");
+  topRow.className = "slot-control__header";
+
+  const title = document.createElement("span");
+  title.textContent = label;
+
+  const value = document.createElement("span");
+  value.className = "slot-control__value";
+  const initialValue = initial ?? Number(min);
+  value.textContent = valueFormatter(initialValue);
+  value.dataset.valueFor = key;
+
+  topRow.appendChild(title);
+  topRow.appendChild(value);
+
+  const input = document.createElement("input");
+  input.type = "range";
+  input.min = String(min);
+  input.max = String(max);
+  input.step = String(step);
+  input.value = String(initialValue);
+  input.disabled = true;
+  input.dataset.control = key;
+  input.addEventListener("input", () => {
+    const numericValue = Number(input.value);
+    value.textContent = valueFormatter(numericValue);
+    onInput(numericValue);
+  });
+
+  wrapper.appendChild(topRow);
+  wrapper.appendChild(input);
+
+  return { wrapper, input, valueElement: value };
+}
+
+function createSlotState() {
+  return {
+    image: null,
+    zoom: 1,
+    rotation: 0,
+    offsetX: 0,
+    offsetY: 0,
+  };
+}
+
 function handleFileChange(slotIndex, file, previewElement) {
+  const slotState = state.slotData[slotIndex];
+  if (!slotState) return;
+
   if (!file) {
-    delete state.images[slotIndex];
+    resetSlotState(slotIndex);
     resetPreview(previewElement);
     updateDownloadState();
     render();
@@ -113,14 +216,21 @@ function handleFileChange(slotIndex, file, previewElement) {
   reader.onload = (e) => {
     const img = new Image();
     img.onload = () => {
-      state.images[slotIndex] = img;
+      slotState.image = img;
+      slotState.zoom = 1;
+      slotState.rotation = 0;
+      slotState.offsetX = 0;
+      slotState.offsetY = 0;
       updatePreview(previewElement, img.src);
+      syncSlotControls(slotIndex);
       updateDownloadState();
       render();
     };
     img.onerror = () => {
       alert("Unable to load that file. Please try another image.");
+      resetSlotState(slotIndex);
       resetPreview(previewElement);
+      updateDownloadState();
     };
     img.src = e.target?.result;
   };
@@ -130,18 +240,24 @@ function handleFileChange(slotIndex, file, previewElement) {
 function resetPreview(preview) {
   preview.innerHTML = "";
   preview.textContent = "Drop a photo";
+  preview.classList.remove("has-image");
 }
 
 function updatePreview(preview, src) {
   preview.innerHTML = "";
+  preview.classList.add("has-image");
   const img = document.createElement("img");
   img.src = src;
   img.alt = "Slot preview";
+  const hint = document.createElement("span");
+  hint.className = "slot-preview-hint";
+  hint.textContent = "Drag to move";
   preview.appendChild(img);
+  preview.appendChild(hint);
 }
 
 function updateDownloadState() {
-  const filled = Object.keys(state.images).length;
+  const filled = Object.values(state.slotData).filter((slot) => slot.image).length;
   downloadButton.disabled = filled === 0;
 }
 
@@ -160,23 +276,30 @@ function render() {
   ctx.fillRect(0, 0, width, height);
 
   template.slots.forEach((slot, index) => {
-    const img = state.images[index];
+    const slotState = state.slotData[index];
+    const img = slotState?.image;
     if (!img) return;
 
-    const slotX = slot.x * width + margin / 2;
-    const slotY = slot.y * height + margin / 2;
-    const slotW = slot.w * width - margin;
-    const slotH = slot.h * height - margin;
-
-    if (slotW <= 0 || slotH <= 0) {
+    const metrics = getSlotMetrics(slot, width, height, margin);
+    if (metrics.width <= 0 || metrics.height <= 0) {
       return;
     }
 
-    drawRoundedImage(ctx, img, slotX, slotY, slotW, slotH, radius);
+    drawRoundedImage(ctx, img, metrics, radius, slotState);
   });
 }
 
-function drawRoundedImage(context, image, x, y, width, height, radius) {
+function getSlotMetrics(slot, width, height, margin) {
+  return {
+    x: slot.x * width + margin / 2,
+    y: slot.y * height + margin / 2,
+    width: slot.w * width - margin,
+    height: slot.h * height - margin,
+  };
+}
+
+function drawRoundedImage(context, image, metrics, radius, slotState) {
+  const { x, y, width, height } = metrics;
   const r = Math.min(radius, width / 2, height / 2);
   context.save();
   context.beginPath();
@@ -192,14 +315,106 @@ function drawRoundedImage(context, image, x, y, width, height, radius) {
   context.closePath();
   context.clip();
 
-  const scale = Math.max(width / image.width, height / image.height);
+  const coverScale = Math.max(width / image.width, height / image.height);
+  const scale = coverScale * slotState.zoom;
   const scaledWidth = image.width * scale;
   const scaledHeight = image.height * scale;
-  const dx = x + (width - scaledWidth) / 2;
-  const dy = y + (height - scaledHeight) / 2;
+  const centerX = x + width / 2 + slotState.offsetX;
+  const centerY = y + height / 2 + slotState.offsetY;
 
-  context.drawImage(image, dx, dy, scaledWidth, scaledHeight);
+  context.translate(centerX, centerY);
+  context.rotate((slotState.rotation * Math.PI) / 180);
+  context.drawImage(image, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
   context.restore();
+}
+
+function resetSlotState(slotIndex) {
+  const slotState = state.slotData[slotIndex];
+  if (!slotState) return;
+  slotState.image = null;
+  slotState.zoom = 1;
+  slotState.rotation = 0;
+  slotState.offsetX = 0;
+  slotState.offsetY = 0;
+  syncSlotControls(slotIndex);
+}
+
+function syncSlotControls(slotIndex) {
+  const slotState = state.slotData[slotIndex];
+  const card = slotsContainer.querySelector(`[data-slot-index="${slotIndex}"]`);
+  if (!slotState || !card) return;
+
+  const zoomInput = card.querySelector("input[data-control=\"zoom\"]");
+  const rotationInput = card.querySelector("input[data-control=\"rotation\"]");
+  const zoomValue = card.querySelector("[data-value-for=\"zoom\"]");
+  const rotationValue = card.querySelector("[data-value-for=\"rotation\"]");
+
+  const hasImage = Boolean(slotState.image);
+
+  [zoomInput, rotationInput].forEach((input) => {
+    if (!input) return;
+    input.disabled = !hasImage;
+  });
+
+  if (zoomInput && zoomValue) {
+    zoomInput.value = String(slotState.zoom);
+    zoomValue.textContent = `${Math.round(slotState.zoom * 100)}%`;
+  }
+
+  if (rotationInput && rotationValue) {
+    rotationInput.value = String(slotState.rotation);
+    rotationValue.textContent = `${Math.round(slotState.rotation)}°`;
+  }
+}
+
+function enablePreviewDragging(preview, slotIndex, slotState) {
+  let activePointer = null;
+  let lastX = 0;
+  let lastY = 0;
+
+  const handlePointerDown = (event) => {
+    if (!slotState.image) return;
+    activePointer = event.pointerId;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    preview.setPointerCapture(activePointer);
+    preview.classList.add("is-dragging");
+  };
+
+  const handlePointerMove = (event) => {
+    if (activePointer !== event.pointerId || !slotState.image) return;
+    const dx = event.clientX - lastX;
+    const dy = event.clientY - lastY;
+    lastX = event.clientX;
+    lastY = event.clientY;
+
+    const rect = preview.getBoundingClientRect();
+    const margin = Number(marginInput.value);
+    const metrics = getSlotMetrics(state.selectedTemplate.slots[slotIndex], canvas.width, canvas.height, margin);
+    const slotWidth = metrics.width;
+    const slotHeight = metrics.height;
+
+    if (slotWidth > 0) {
+      slotState.offsetX += (dx / rect.width) * slotWidth;
+    }
+    if (slotHeight > 0) {
+      slotState.offsetY += (dy / rect.height) * slotHeight;
+    }
+    render();
+  };
+
+  const endPointer = (event) => {
+    if (activePointer !== event.pointerId) return;
+    preview.classList.remove("is-dragging");
+    preview.releasePointerCapture(activePointer);
+    activePointer = null;
+  };
+
+  preview.addEventListener("pointerdown", handlePointerDown);
+  preview.addEventListener("pointermove", handlePointerMove);
+  preview.addEventListener("pointerup", endPointer);
+  preview.addEventListener("pointerleave", endPointer);
+  preview.addEventListener("pointercancel", endPointer);
 }
 
 function clamp(value, min, max) {

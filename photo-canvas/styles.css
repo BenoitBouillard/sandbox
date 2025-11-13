@@ -152,12 +152,66 @@ button:disabled {
   font-size: 0.8rem;
   color: color-mix(in srgb, CanvasText 50%, CanvasText 20%);
   overflow: hidden;
+  position: relative;
+  cursor: default;
+  user-select: none;
+  touch-action: none;
 }
 
 .slot-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.slot-preview.has-image {
+  cursor: grab;
+}
+
+.slot-preview-hint {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.slot-preview.is-dragging {
+  cursor: grabbing;
+  border-color: var(--accent);
+}
+
+.slot-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.slot-control {
+  font-size: 0.8rem;
+  gap: 0.25rem;
+}
+
+.slot-control__header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, CanvasText 70%, CanvasText 20%);
+}
+
+.slot-control__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.slot-hint {
+  margin: 0;
+  font-size: 0.7rem;
+  color: color-mix(in srgb, CanvasText 60%, CanvasText 20%);
 }
 
 canvas {
