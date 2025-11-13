@@ -165,7 +165,7 @@ button:disabled {
 }
 
 .slot-preview.has-image {
-  cursor: grab;
+  cursor: default;
 }
 
 .slot-preview-hint {
@@ -179,11 +179,6 @@ button:disabled {
   font-size: 0.65rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.slot-preview.is-dragging {
-  cursor: grabbing;
-  border-color: var(--accent);
 }
 
 .slot-controls {
