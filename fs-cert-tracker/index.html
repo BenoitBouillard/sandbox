@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Functional Safety Certification Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Functional safety</p>
+      <h1>Certification tracker</h1>
+      <p class="lede">Follow each project's certification status, the last audit date, and the next actions to close compliance gaps.</p>
+    </div>
+    <div class="legend">
+      <span class="badge status-open">Open</span>
+      <span class="badge status-progress">In progress</span>
+      <span class="badge status-pending">Blocked</span>
+      <span class="badge status-closed">Closed</span>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Filters & insight</h2>
+      <p>Search by project, owner, or organization and narrow down by status.</p>
+    </div>
+    <div class="filters">
+      <div class="field">
+        <label for="search">Search</label>
+        <input id="search" type="search" placeholder="Project, owner, organization" />
+      </div>
+      <div class="field">
+        <label for="status-filter">Status</label>
+        <select id="status-filter">
+          <option value="all">All</option>
+          <option value="open">Open</option>
+          <option value="in-progress">In progress</option>
+          <option value="blocked">Blocked</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="field compact">
+        <label class="muted">&nbsp;</label>
+        <button id="reset" class="ghost">Reset filters</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Projects</h2>
+      <p id="project-count" class="muted"></p>
+    </div>
+    <div class="table-wrapper">
+      <table id="projects-table">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Status</th>
+            <th>Last check</th>
+            <th>Target safety level</th>
+            <th>Owner & organization</th>
+            <th>Workstream & certification body</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Add or edit a project</h2>
+      <p class="muted">Use this form to capture new projects or update existing ones. Changes are saved in this browser.</p>
+    </div>
+    <form id="project-form" class="form-grid">
+      <input type="hidden" id="edit-id" />
+      <div class="field">
+        <label for="project">Project name</label>
+        <input id="project" required />
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" required>
+          <option value="open">Open</option>
+          <option value="in-progress">In progress</option>
+          <option value="blocked">Blocked</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="last-check">Last check</label>
+        <input id="last-check" type="date" required />
+      </div>
+      <div class="field">
+        <label for="safety-level">Target safety level</label>
+        <input id="safety-level" placeholder="e.g., FS3, FS1 (FSO)" />
+      </div>
+      <div class="field">
+        <label for="owner">Owner</label>
+        <input id="owner" placeholder="Name" />
+      </div>
+      <div class="field">
+        <label for="organization">Organization</label>
+        <input id="organization" placeholder="Team or supplier" />
+      </div>
+      <div class="field">
+        <label for="workstream">Key workstream</label>
+        <input id="workstream" placeholder="Main certification steps" />
+      </div>
+      <div class="field">
+        <label for="cert-body">Certification body</label>
+        <input id="cert-body" placeholder="e.g., INERIS, TÜV Rheinland" />
+      </div>
+      <div class="field full">
+        <label for="notes">Notes</label>
+        <textarea id="notes" rows="3" placeholder="Follow-up actions, blockers, risks"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="primary" id="submit-btn">Save project</button>
+        <button type="reset" class="ghost" id="cancel-edit">Cancel</button>
+      </div>
+    </form>
+  </section>
+
+  <footer class="muted smallprint">
+    <p>Data is stored locally in your browser. Export and archive snapshots as needed for audits.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
